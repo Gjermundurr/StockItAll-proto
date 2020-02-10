@@ -1,0 +1,1 @@
+# StockItAll-proto
