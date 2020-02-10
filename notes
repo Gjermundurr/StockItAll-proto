@@ -1,5 +1,6 @@
 Program; User creates a new stock item by using client-side GUI interface and enters description and amount. the server recieves the data and creates the new object. The users can then manage their stock inventory by accessing a CLI-menu 
-Objective; Keep track of individual stock items using a code, a description and a number of items on hand. 
+
+Objective; Keep track of individual stock items using a code, a description and a number of items on hand.
 
 
 Classes:

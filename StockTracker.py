@@ -1,4 +1,6 @@
 import csv
+from tempfile import NamedTemporaryFile
+import shutil
 
 
 class StockItem:
@@ -22,15 +24,27 @@ class StockTracker(StockItem):
     def addItem(self):
         ''' add a new stockItem to inventory '''
 
-        with open('StockTracker.data', 'ab') as stocktracker_data_file:
-            pickle.dump(self.data, stocktracker_data_file)
 
+        filename = 'stockdata.csv'
+        fields = ['CODE', 'DESCRIPTION', 'AMOUNT']
+        with open(filename, 'a+', newline='') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=fields)
+            writer.writerow({'CODE': self.code, 'DESCRIPTION': self.description, 'AMOUNT': self.amount})
 
 
 
     def updateItem(self):
         ''' update a stockItem '''
-        pass
+        with open('stockdata.csv', 'r') as csvfile:
+            fields = ['CODE', 'DESCRIPTION', 'AMOUNT']
+            reader = csv.DictReader(csvfile, fieldnames=fields)
+            writer = csv.DictWriter(csvfile, fieldnames=fields)
+            for row in reader:
+                if row['CODE'] == code:
+                    print('Found it!')
+
+
+
 
 
     def getItem(self):
