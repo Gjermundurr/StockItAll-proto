@@ -1,5 +1,4 @@
 import csv
-import os
 
 
 class StockItem:
@@ -12,17 +11,16 @@ class StockItem:
         self.description = description
         self.amount = amount
 
-        self.data = {'CODE': self.code, 'DESCRIPTION': self.description, 'AMOUNT': self.amount}
+        self.data = {'CODE': self.code, 'DESCRIPTION': self.description, 'AMOUNT': self.amount}         # create dict object attribute for each item created
 
 
 class StockTracker:
     ''' Management class of Stock-item objects to be used by CLI-menu '''
 
-
-    def __init__(self, amount=None, code=None, description=None, item=None):
-        self.amount = amount
-        self.description = description
+    def __init__(self, code=None, description=None, amount=None, item=None):
         self.code = code
+        self.description = description
+        self.amount = amount
         self.item = item
 
     def addItem(self):
@@ -38,13 +36,13 @@ class StockTracker:
         ''' update a stockItems amount by code '''
 
         fields = ['CODE', 'DESCRIPTION', 'AMOUNT']
-        data = []                                                       # temp list for modifying item entry
+        data = []   # temp list for modifying item entry
         with open('stockdata.csv', 'r', newline='') as csvfile_read:    # save database to temp_list
             reader = csv.DictReader(csvfile_read, fieldnames=fields)
             for row in reader:
                 data.append(row)
 
-        for item in data:                                               # Search for the code given by user and update its amount
+        for item in data:   # Search for the code given by user and update its amount
             if item.get('CODE') == str(self.code):
                 item['AMOUNT'] = self.amount
 
@@ -52,7 +50,7 @@ class StockTracker:
             writer = csv.DictWriter(csvfile_write, fieldnames=fields)
             for line in data:
                 writer.writerow(line)
-        data.clear()                                                     # Clear list data after its function is done
+        data.clear()    # Clear list data after its function is done
 
 
 

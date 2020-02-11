@@ -3,8 +3,12 @@ from prettytable import PrettyTable
 from sys import exit
 
 def main_menu():
-    select = 0
-    while select != 5:
+
+    condition = True
+    valid_select = False
+
+    while condition:
+        print()
         print('''
     -------------------------------------------------------
     StockItAll System Interface
@@ -15,31 +19,39 @@ def main_menu():
     (4)\t\tDisplay full item-inventory
     
     (5)\t\tExit''')
-        select = int(input('''
+        try:
+            select = int(input('''
     Select an option: '''))
+
+            if select in range(1,6) and type(select) == int: ValueError
+
+        except: ValueError
+            print('Error!\t Choose an option from the menu')
+
+        print()
 
 
         def menu_1():
             ''' Add a new item to stock '''
 
-            print()
-            code = int(input('\tEnter a stock code: '))
-            description = input('\tEnter item description: ')
-            amount = int(input('\tEnter item stock: '))
+            code = int(input('Enter a Item code: '))
+            description = input('Enter Item description: ')
+            amount = int(input('Enter Item stock: '))
             new_item = StockItem(code=code, description=description, amount=amount)
             StockTracker.addItem(new_item)
 
         def menu_2():
             ''' Update stock inventory of item '''
 
-            code = int(input('\tEnter code: '))
-            amount = int(input('\tEnter new amount: '))
+            code = int(input('Enter Code: '))
+            amount = int(input('Enter new Amount: '))
             update_item = StockTracker(code=code, amount=amount)
             StockTracker.updateItem(update_item)
 
         def menu_3():
             ''' Display item details from code '''
-            code = input('\tEnter the Code of the item you wish to display: ')
+
+            code = input('Enter Item code: ')
             get_item = StockTracker(code=code)
             r_item = StockTracker.DisplayItem(get_item)
 
@@ -47,6 +59,8 @@ def main_menu():
             PTable.field_names = ['Code', 'Description', 'Amount']
             PTable.add_row([r_item['CODE'], r_item['DESCRIPTION'], r_item['AMOUNT']])
             print()
+            print('''
+        StockItAll Inventory:''')
             print(PTable)
 
         def menu_4():
@@ -55,6 +69,8 @@ def main_menu():
             inventory = StockTracker.DisplayInventory(None)
             for item in inventory:
                 PTable.add_row([item['CODE'], item['DESCRIPTION'], item['AMOUNT']])
+            print('''
+        StockItAll Inventory:''')
             print(PTable)
 
         def menu_5():
