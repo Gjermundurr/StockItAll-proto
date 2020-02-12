@@ -1,12 +1,43 @@
 from StockTracker import *
 from prettytable import PrettyTable
 from sys import exit
+import logging
+import threading
+import socket
+import pickle
+
+
+logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO, datefmt='%H:%M:%S')
+
+def server_thread():
+    HOST = '127.0.0.1'
+    PORT = 60000
+
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind((HOST, PORT))
+    server.listen()
+    while True:
+        conn, addr = server.accept()
+        with conn:
+
+            print()
+            logging.info(f'Client connected: IP {addr[0]} Port {addr[1]}')
+            while True:
+                data = conn.recv(1024)
+                if not data:
+                    break
+                recv_item = pickle.loads(data)
+                new_item = StockItem(code=recv_item[0], description=recv_item[1], amount=recv_item[2])
+                StockTracker.addItem(new_item)
+                continue
+        logging.info(f'Client disconnected: IP {addr[0]} Port {addr[1]}')
+
+
+
 
 def main_menu():
 
     condition = True
-    valid_select = False
-
     while condition:
         print()
         print('''
@@ -19,26 +50,32 @@ def main_menu():
     (4)\t\tDisplay full item-inventory
     
     (5)\t\tExit''')
+
         try:
-            select = int(input('''
-    Select an option: '''))
+            select = int(input('''Select an option: '''))
 
-            if select in range(1,6) and type(select) == int: ValueError
-
-        except: ValueError
-            print('Error!\t Choose an option from the menu')
-
-        print()
+        except ValueError:
+            print()
+            logging.info('Error:\t Use a number to select an option from the menu!')
+            continue
 
 
         def menu_1():
             ''' Add a new item to stock '''
 
-            code = int(input('Enter a Item code: '))
-            description = input('Enter Item description: ')
-            amount = int(input('Enter Item stock: '))
-            new_item = StockItem(code=code, description=description, amount=amount)
-            StockTracker.addItem(new_item)
+            while True:
+                try:
+                    code = int(input('Enter a Item code: '))
+                    description = input('Enter Item description: ')
+                    amount = int(input('Enter Item stock: '))
+                    new_item = StockItem(code=code, description=description, amount=amount)
+                    StockTracker.addItem(new_item)
+                    print()
+                    logging.info(f'Added!\t Code: {code} Description: {description} Amount: {amount}')
+                    break
+                except ValueError:
+                    print()
+                    logging.info('Error: Please use numbers for Item Code and Amount!')
 
         def menu_2():
             ''' Update stock inventory of item '''
@@ -74,6 +111,8 @@ def main_menu():
             print(PTable)
 
         def menu_5():
+            print()
+            logging.info('Exiting program. Goodbye!')
             exit()
 
 
@@ -87,10 +126,14 @@ def main_menu():
             menu_4()
         elif select == 5:
             menu_5()
+        elif select >5 or select < 1:
+            print()
+            logging.info('Error:\t This is not an option!')
 
 
+t1 = threading.Thread(target=server_thread)
+t2 = threading.Thread(target=main_menu)
 
+t1.start()
+t2.start()
 
-if __name__ == '__main__':
-
-    main_menu()

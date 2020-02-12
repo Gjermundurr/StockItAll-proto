@@ -37,15 +37,17 @@ class StockTracker:
 
         fields = ['CODE', 'DESCRIPTION', 'AMOUNT']
         data = []   # temp list for modifying item entry
-        with open('stockdata.csv', 'r', newline='') as csvfile_read:    # save database to temp_list
+        # reads the contents of the csv-file to a temporary list object filled with each item-dictionary
+        with open('stockdata.csv', 'r', newline='') as csvfile_read:
             reader = csv.DictReader(csvfile_read, fieldnames=fields)
             for row in reader:
                 data.append(row)
 
-        for item in data:   # Search for the code given by user and update its amount
+        # Searches the temporary list for the given keyword and changes its "amount"
+        for item in data:
             if item.get('CODE') == str(self.code):
                 item['AMOUNT'] = self.amount
-
+        #
         with open('stockdata.csv', 'w', newline='') as csvfile_write:   # Overwrite the database with new changes
             writer = csv.DictWriter(csvfile_write, fieldnames=fields)
             for line in data:
