@@ -1,8 +1,9 @@
-''' Client GUI application '''
+""" Client GUI application """
 from tkinter import *
 import tkinter.messagebox as mbox
 import socket
 import pickle
+
 
 # Exit function so a TCP-close flag is sent to server
 def exit_app():
@@ -22,7 +23,8 @@ def button_add():
     # Send the serialized data through socket
     s.sendall(serialized_data)
 
-    mbox.showinfo('Item Added!', f'Item code: {item_data[0]} \nItem description: {item_data[2]} \nAmount: {item_data[2]}')
+    mbox.showinfo('Item Added!',
+                  f'Item code: {item_data[0]} \nItem description: {item_data[2]} \nAmount: {item_data[2]}')
 
 
 # Establish connection to server when client program starts
@@ -61,10 +63,8 @@ ent_amount.place(x=115, y=60)
 btn_add = Button(window, text='Add item', command=button_add)
 btn_exit = Button(window, text='Exit', command=exit_app)
 
-#Button placement
+# Button placement
 btn_add.place(x=145, y=90)
 btn_exit.place(x=210, y=90)
-
-
 
 window.mainloop()
