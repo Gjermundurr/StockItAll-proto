@@ -25,26 +25,33 @@ class StockTracker:
         self.item = item
         self.data = data
 
+    def createCSV(self):
+        with open('StockTracker.csv', 'x') as csvfile:
+            pass
+
     def addItem(self):
         """ add a new stockItem to inventory database """
 
         temp_list = []
         fields = ['CODE', 'DESCRIPTION', 'AMOUNT']
-        with open('stockdata.csv', 'r', newline='') as csvfile:
+        #   First checks if the new items code already exists.
+        with open('StockTracker.csv', 'r', newline='') as csvfile:
             reader = csv.DictReader(csvfile, fieldnames=fields)
             for row in reader:
                 temp_list.append(row.get('CODE'))
             if str(self.code) in temp_list:
-                temp_list.clear()  # reset temp_list for next entry
-                return 'Item already exists!'
+                temp_list.clear()  # reset temp_list for next method call
+                return 'Error: Item already exists!'
 
             else:
+                #   Item is added if it its code is unique
                 fields = ['CODE', 'DESCRIPTION', 'AMOUNT']
-                with open('stockdata.csv', 'a', newline='') as csvfile:
+                with open('StockTracker.csv', 'a', newline='') as csvfile:
                     writer = csv.DictWriter(csvfile, fieldnames=fields)
                     writer.writerow(self.data)
-                    temp_list.clear()  # reset temp_list for next entry
-                    return 'Item added to inventory!'
+                    temp_list.clear()  # reset temp_list for next method call
+                    return f"INFO: Item added by Server! Code: {self.data['CODE']}, Description: {self.data['DESCRIPTION']}, Amount: {self.data['AMOUNT']}"
+
 
     def updateItem(self):
         """ update a stockItems amount by code """
@@ -52,7 +59,7 @@ class StockTracker:
         fields = ['CODE', 'DESCRIPTION', 'AMOUNT']
         data = []  # temp list for modifying item entry
         #   Reads the contents of the csv-file to a temporary list object filled with each item-dictionary
-        with open('stockdata.csv', 'r', newline='') as csvfile_read:
+        with open('StockTracker.csv', 'r', newline='') as csvfile_read:
             reader = csv.DictReader(csvfile_read, fieldnames=fields)
             for row in reader:
                 data.append(row)
@@ -61,33 +68,34 @@ class StockTracker:
         for item in data:
             if item.get('CODE') == str(self.code):
                 item['AMOUNT'] = self.amount
-                return 'Item updated!'
+                continue
             else:
                 return 'This item does not exist!'
 
         #   Open the csv-file in write-mode and re-write all entries from the temporary list
-        with open('stockdata.csv', 'w', newline='') as csvfile_write:  # Overwrite the database with new changes
+        with open('StockTracker.csv', 'w', newline='') as csvfile_write:
             writer = csv.DictWriter(csvfile_write, fieldnames=fields)
             for line in data:
                 writer.writerow(line)
+                return 'Item updated!'
         data.clear()  # Clear list data after its function is done
 
     def displayItem(self):
         """ Display all details of a item when given code """
 
         fields = ['CODE', 'DESCRIPTION', 'AMOUNT']
-        with open('stockdata.csv', 'r', newline='') as csvfile:
+        with open('StockTracker.csv', 'r', newline='') as csvfile:
             reader = csv.DictReader(csvfile, fieldnames=fields)
             #   Search each row in csv-file after the supplied "code" that matches both in number and length
             for row in reader:
                 if str(self.code) in row.get('CODE') and len(str(self.code)) == len(row.get('CODE')):
-                    return row  # Returns the full row
+                    return row  # Returns the full row of found item
 
     def displayInventory(self):
         """ Display entire stock inventory"""
 
         fields = ['CODE', 'DESCRIPTION', 'AMOUNT']
-        with open('stockdata.csv', 'r', newline='') as csvfile:
+        with open('StockTracker.csv', 'r', newline='') as csvfile:
             reader = csv.DictReader(csvfile, fieldnames=fields)
-            for row in reader:  # A generator that yields each row one by one
+            for row in reader:  # A generator that yields each row in CSV file one by one
                 yield row
