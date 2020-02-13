@@ -38,7 +38,6 @@ def server_thread():
 
             try:
                 with conn:  # Executes when a connection is accepted
-                    print()
                     logging.info(f'INFO: Client connected: IP {addr[0]} Port {addr[1]}')
 
                     while True:
@@ -47,7 +46,7 @@ def server_thread():
                         if not data:
                             break
                         recv_item = pickle.loads(data)
-                        new_item = StockItem(code=recv_item[0], description=recv_item[1], amount=recv_item[2])
+                        new_item = StockTracker(code=recv_item[0], description=recv_item[1], amount=recv_item[2])
                         StockTracker.addItem(new_item)
                         logging.info(f"INFO: Item added by Client! Code: {new_item.data['CODE']}, Description: {new_item.data['DESCRIPTION']}, Amount: {new_item.data['AMOUNT']}")
                         continue
@@ -62,7 +61,6 @@ def main_menu():
     """ Infinite CLI-menu loop that is executed as a separate thread """
 
     while True:
-        print()
         print('''
     -------------------------------------------------------
     StockItAll System Interface
@@ -79,7 +77,6 @@ def main_menu():
     Select an option: '''))
 
         except ValueError:
-            print()
             logging.info('Error: Use a number to select an option from the menu!')
             continue
 
@@ -90,7 +87,7 @@ def main_menu():
                     code = int(input('Enter a Item code: '))
                     description = input('Enter Item description: ')
                     amount = int(input('Enter Item stock: '))
-                    new_item = StockItem(code=code, description=description, amount=amount)
+                    new_item = StockTracker(code=code, description=description, amount=amount)
                     add_return = StockTracker.addItem(new_item)
                     logging.info(f'' + add_return)
                     break
@@ -106,7 +103,7 @@ def main_menu():
                     amount = int(input('Enter new Amount: '))
                     update_item = StockTracker(code=code, amount=amount)
                     item_return = StockTracker.updateItem(update_item)
-                    logging.info('INFO:'+f' {item_return}')
+                    logging.info(f'' + item_return)
                     break
                 except ValueError:
                     print()

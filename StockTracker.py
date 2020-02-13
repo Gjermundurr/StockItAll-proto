@@ -4,30 +4,19 @@ import csv
 class StockItem:
     """ Stock-Item constructor class """
 
-    def __init__(self, code: int, description: str, amount: int):
+    def __init__(self, code: int = None, description: str = None, amount: int = None):
         """ The constructor contains all required arguments for a Stockitem to be created """
         self.code = code
         self.description = description
         self.amount = amount
-
-        #   Give all items an attribute with a dictionary containing its details
         self.data = {'CODE': self.code, 'DESCRIPTION': self.description, 'AMOUNT': self.amount}
 
+    def __str__(self):
+        return 'StockItem Object containing Item code, description and amount'
 
-class StockTracker:
+
+class StockTracker(StockItem):
     """ Back-end Management class of Stock-item objects to be used by CLI-menu and Tkinter GUI app """
-
-    def __init__(self, code=None, description=None, amount=None, item=None, data=None):
-        """ arguments for when specific arguments are needed by different method calls """
-        self.code = code
-        self.description = description
-        self.amount = amount
-        self.item = item
-        self.data = data
-
-    def createCSV(self):
-        with open('StockTracker.csv', 'x') as csvfile:
-            pass
 
     def addItem(self):
         """ add a new stockItem to inventory database """
@@ -52,33 +41,31 @@ class StockTracker:
                     temp_list.clear()  # reset temp_list for next method call
                     return f"INFO: Item added by Server! Code: {self.data['CODE']}, Description: {self.data['DESCRIPTION']}, Amount: {self.data['AMOUNT']}"
 
-
     def updateItem(self):
         """ update a stockItems amount by code """
 
         fields = ['CODE', 'DESCRIPTION', 'AMOUNT']
-        data = []  # temp list for modifying item entry
+        csv_data = []  # temp list for modifying item entry
         #   Reads the contents of the csv-file to a temporary list object filled with each item-dictionary
         with open('StockTracker.csv', 'r', newline='') as csvfile_read:
             reader = csv.DictReader(csvfile_read, fieldnames=fields)
             for row in reader:
-                data.append(row)
+                csv_data.append(row)
 
         #   Searches the temporary list for the given keyword and changes its dictionary "amount"
-        for item in data:
-            if item.get('CODE') == str(self.code):
+        for item in csv_data:
+            if str(self.code) == item.get('CODE'):
                 item['AMOUNT'] = self.amount
-                continue
-            else:
-                return 'This item does not exist!'
 
         #   Open the csv-file in write-mode and re-write all entries from the temporary list
         with open('StockTracker.csv', 'w', newline='') as csvfile_write:
             writer = csv.DictWriter(csvfile_write, fieldnames=fields)
-            for line in data:
+            for line in csv_data:
                 writer.writerow(line)
-                return 'Item updated!'
-        data.clear()  # Clear list data after its function is done
+
+            csv_data.clear()  # Clear list data after its function is done
+            return 'INFO: Item updated!'
+
 
     def displayItem(self):
         """ Display all details of a item when given code """
@@ -99,3 +86,4 @@ class StockTracker:
             reader = csv.DictReader(csvfile, fieldnames=fields)
             for row in reader:  # A generator that yields each row in CSV file one by one
                 yield row
+
