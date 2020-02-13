@@ -9,40 +9,42 @@ import pickle
 #   logging module configuration of layout
 logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO, datefmt='%H:%M:%S')
 
-#   PrettyTable configurations
-PTable = PrettyTable()
-PTable.field_names = ['Code', 'Description', 'Amount']
 
 def server_thread():
     """ Server thread: listens for incoming connections from the Client-application """
 
-    #   Server listening IP and PORT
+    #   Servers IP and PORT
     HOST = '127.0.0.1'
     PORT = 60000
 
-    #   Socket object named 'server' and set it to listen for incoming connections
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind((HOST, PORT))
-    server.listen()
+    #   Looping the server listener in case server does not recieve a TCP-FIN bit
     while True:
-        conn, addr = server.accept()
+        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server.bind((HOST, PORT))
+        server.listen()
+        while True:
+            conn, addr = server.accept()
 
-        with conn:  # Executes when a connection is accepted
-            print()
-            logging.info(f'Client connected: IP {addr[0]} Port {addr[1]}')
+            try:
+                with conn:  # Executes when a connection is accepted
+                    print()
+                    logging.info(f'Client connected: IP {addr[0]} Port {addr[1]}')
 
-            while True:
-                #   A loop that deserializes the data then creates a new StockItem object and adds it to the database
-                data = conn.recv(1024)
-                if not data:
-                    break
-                recv_item = pickle.loads(data)
-                new_item = StockItem(code=recv_item[0], description=recv_item[1], amount=recv_item[2])
-                StockTracker.addItem(new_item)
-                continue
+                    while True:
+                        #   A loop that deserializes the data then creates a new StockItem object and adds it to the database
+                        data = conn.recv(1024)
+                        if not data:
+                            break
+                        recv_item = pickle.loads(data)
+                        new_item = StockItem(code=recv_item[0], description=recv_item[1], amount=recv_item[2])
+                        StockTracker.addItem(new_item)
+                        continue
 
-        logging.info(f'Client disconnected: IP {addr[0]} Port {addr[1]}')
-
+                logging.info(f'Client disconnected: IP {addr[0]} Port {addr[1]}')
+            except ConnectionResetError:
+                #   If connection unexpectedly terminates the server listener will reset
+                server.close()
+                logging.info(f'Client disconnected: IP {addr[0]} Port {addr[1]}')
 
 def main_menu():
     """ CLI-menu loop that is executed as a separate thread """
@@ -69,7 +71,7 @@ def main_menu():
             logging.info('Error:\t Use a number to select an option from the menu!')
             continue
 
-        def menu_1():
+        if select == 1:
             """ Add a new item to stock """
             while True:
                 try:
@@ -84,27 +86,29 @@ def main_menu():
                     print()
                     logging.info('Error:\t Use digits only for Code and Amount!')
 
-        def menu_2():
+        elif select == 2:
             """ Update stock inventory of item """
             while True:
                 try:
                     code = int(input('Enter Code: '))
                     amount = int(input('Enter new Amount: '))
                     update_item = StockTracker(code=code, amount=amount)
-                    StockTracker.updateItem(update_item)
+                    item_return = StockTracker.updateItem(update_item)
+                    logging.info('INFO:'+f'{item_return}')
                     break
                 except ValueError:
                     print()
                     logging.info('Error:\t Enter digits only!')
 
-        def menu_3():
+        elif select == 3:
             """ Display item details from code """
-
             try:
-                code = input('Enter Item code: ')
+                code = int(input('Enter Item code: '))
                 get_item = StockTracker(code=code)
                 r_item = StockTracker.displayItem(get_item)
                 #   Printing a table containing the item
+                PTable = PrettyTable()
+                PTable.field_names = ['Code', 'Description', 'Amount']
                 PTable.add_row([r_item['CODE'], r_item['DESCRIPTION'], r_item['AMOUNT']])
                 print()
                 print('''
@@ -115,31 +119,23 @@ def main_menu():
                 print()
                 logging.info('Error:\t This item does not exist!')
 
-        def menu_4():
+        elif select == 4:
             inventory = StockTracker.displayInventory(None)
+            PTable = PrettyTable()
+            PTable.field_names = ['Code', 'Description', 'Amount']
             for item in inventory:
                 PTable.add_row([item['CODE'], item['DESCRIPTION'], item['AMOUNT']])
             print('''
         StockItAll Inventory:''')
             print(PTable)
 
-        def menu_5():
+        elif select == 5:
             print()
             logging.info('INFO:\t Shutting down server ...')
             logging.info('INFO:\t Exiting StockItAll System CLI-menu. Good-bye!')
             exit()
 
-        if select == 1:
-            menu_1()
-        elif select == 2:
-            menu_2()
-        elif select == 3:
-            menu_3()
-        elif select == 4:
-            menu_4()
-        elif select == 5:
-            menu_5()
-        elif select > 5 or select < 1:
+        elif select > 5 or select < 1:  # Input sanitation that limits user input to the specified option
             print()
             logging.info('Error:\t This is not an option!')
 

@@ -27,6 +27,7 @@ class StockTracker:
 
     def addItem(self):
         """ add a new stockItem to inventory database """
+
         temp_list = []
         fields = ['CODE', 'DESCRIPTION', 'AMOUNT']
         with open('stockdata.csv', 'r', newline='') as csvfile:
@@ -34,14 +35,16 @@ class StockTracker:
             for row in reader:
                 temp_list.append(row.get('CODE'))
             if str(self.code) in temp_list:
-                return 'An item already exists with this code!'
+                temp_list.clear()  # reset temp_list for next entry
+                return 'Item already exists!'
 
             else:
+                fields = ['CODE', 'DESCRIPTION', 'AMOUNT']
                 with open('stockdata.csv', 'a', newline='') as csvfile:
                     writer = csv.DictWriter(csvfile, fieldnames=fields)
                     writer.writerow(self.data)
+                    temp_list.clear()  # reset temp_list for next entry
                     return 'Item added to inventory!'
-
 
     def updateItem(self):
         """ update a stockItems amount by code """
@@ -58,6 +61,9 @@ class StockTracker:
         for item in data:
             if item.get('CODE') == str(self.code):
                 item['AMOUNT'] = self.amount
+                return 'Item updated!'
+            else:
+                return 'This item does not exist!'
 
         #   Open the csv-file in write-mode and re-write all entries from the temporary list
         with open('stockdata.csv', 'w', newline='') as csvfile_write:  # Overwrite the database with new changes
