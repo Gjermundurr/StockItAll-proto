@@ -9,20 +9,17 @@ import pickle
 #   logging module configuration of layout
 logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO, datefmt='%H:%M:%S')
 
-#   A try/except clause to check if database exists. if not; it is created
 try:
-    test_file = open('StockTracker.csv', 'r')
+    #   Check if database file exists. if not; file is created
+    test_file = open('StockTracker.csv', mode='x')
     test_file.close()
+    logging.info(f'ERROR: Database not found, File is created!')
+
+except FileExistsError:
     logging.info(f'INFO: Database found: StockTracker.csv')
 
-except FileNotFoundError:
-    create_file = open('StockTracker.csv', 'x')
-    create_file.close()
-    logging.info(f'Error: Database not found! Creating file ...')
-
-
-def server_thread():
-    """ Server thread: listens for incoming connections from the Client-application """
+def server():
+    """ Server thread 2: listens for incoming connections from the Client-application """
 
     #   Servers IP and PORT
     HOST = '127.0.0.1'
@@ -30,11 +27,11 @@ def server_thread():
 
     #   Looping the server listener in case server does not received a TCP-FIN bit
     while True:
-        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server.bind((HOST, PORT))
-        server.listen()
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind((HOST, PORT))
+        s.listen()
         while True:
-            conn, addr = server.accept()
+            conn, addr = s.accept()
 
             try:
                 with conn:  # Executes when a connection is accepted
@@ -47,18 +44,18 @@ def server_thread():
                             break
                         recv_item = pickle.loads(data)
                         new_item = StockTracker(code=recv_item[0], description=recv_item[1], amount=recv_item[2])
-                        StockTracker.addItem(new_item)
+                        StockTracker.AddItem(new_item)
                         logging.info(f"INFO: Item added by Client! Code: {new_item.data['CODE']}, Description: {new_item.data['DESCRIPTION']}, Amount: {new_item.data['AMOUNT']}")
                         continue
 
                 logging.info(f'INFO: Client disconnected: IP {addr[0]} Port {addr[1]}')
             except ConnectionResetError:
                 #   If client connection unexpectedly terminates the TCP connection is closed by server
-                server.close()
+                s.close()
                 logging.info(f'INFO: Client disconnected: IP {addr[0]} Port {addr[1]}')
 
 def main_menu():
-    """ Infinite CLI-menu loop that is executed as a separate thread """
+    """ CLI-menu loop function """
 
     while True:
         print('''
@@ -77,23 +74,25 @@ def main_menu():
     Select an option: '''))
 
         except ValueError:
-            logging.info('Error: Use a number to select an option from the menu!')
+            # Input sanitation if user enters characters instead of numbers
+            logging.info('ERROR: Use a number to select an option from the menu!')
             continue
 
         if select == 1:
-            #   Add a new item to stock
+            #   Add a new item to inventory
             while True:
                 try:
                     code = int(input('Enter a Item code: '))
                     description = input('Enter Item description: ')
                     amount = int(input('Enter Item stock: '))
                     new_item = StockTracker(code=code, description=description, amount=amount)
-                    add_return = StockTracker.addItem(new_item)
-                    logging.info(f'' + add_return)
+                    return_value = StockTracker.AddItem(new_item)
+                    print('Item - ', new_item)
+                    logging.info(return_value)
                     break
                 except ValueError:
                     print()
-                    logging.info('Error: Use digits only for Code and Amount!')
+                    logging.info('ERROR: Use digits only for Code and Amount!')
 
         elif select == 2:
             #   Update StockItems amount by code
@@ -102,35 +101,34 @@ def main_menu():
                     code = int(input('Enter Code: '))
                     amount = int(input('Enter new Amount: '))
                     update_item = StockTracker(code=code, amount=amount)
-                    item_return = StockTracker.updateItem(update_item)
-                    logging.info(f'' + item_return)
+                    return_value = StockTracker.UpdateItem(update_item)
+                    logging.info(return_value)
                     break
                 except ValueError:
                     print()
-                    logging.info('Error: Enter digits only!')
+                    logging.info('ERROR: Use numbers only!')
 
         elif select == 3:
             #   Display specific item details from given code
             try:
                 code = int(input('Enter Item code: '))
                 get_item = StockTracker(code=code)
-                r_item = StockTracker.displayItem(get_item)
+                return_item = StockTracker.ReturnItem(get_item)
                 #   Printing a table containing the item
                 PTable = PrettyTable()
                 PTable.field_names = ['Code', 'Description', 'Amount']
-                PTable.add_row([r_item['CODE'], r_item['DESCRIPTION'], r_item['AMOUNT']])
-                print()
+                PTable.add_row([return_item['CODE'], return_item['DESCRIPTION'], return_item['AMOUNT']])
                 print('''
             StockItAll Inventory:''')
                 print(PTable)
 
             except (ValueError, TypeError):
                 print()
-                logging.info('Error: This item does not exist!')
+                logging.info('ERROR: This item does not exist!')
 
         elif select == 4:
             #   Displays entire inventory of csv file
-            inventory = StockTracker.displayInventory(None)
+            inventory = StockTracker.ReturnInventory(None)
             PTable = PrettyTable()
             PTable.field_names = ['Code', 'Description', 'Amount']
             for item in inventory:
@@ -146,13 +144,13 @@ def main_menu():
             exit()
 
         elif select > 5 or select < 1:
-            """ Input sanitation that limits user input to the specified option """
+            #   limits menu input options between 1-5
             print()
-            logging.info('Error: This is not an option!')
+            logging.info('ERROR: This is not an option!')
 
 
 #   Thread 1 is set to daemon so it is killed when the main_menu calls for Exit
-t1 = threading.Thread(target=server_thread, daemon=True)
+t1 = threading.Thread(target=server, daemon=True)
 t2 = threading.Thread(target=main_menu)
 t1.start()
 t2.start()

@@ -1,1 +1,7 @@
-.idea
+*
+!Pipfile
+!Pipfile.lock
+!client.py
+!main.py
+!StockTracker.py
+!README.md
