@@ -18,41 +18,37 @@ try:
 except FileExistsError:
     logging.info(f'INFO: Database found: StockTracker.csv')
 
-def server():
-    """ Server thread 2: listens for incoming connections from the Client-application """
 
-    #   Servers IP and PORT
-    HOST = '127.0.0.1'
-    PORT = 60000
-
-    #   Looping the server listener in case server does not received a TCP-FIN bit
+def server_socket():
+    """ Server thread: listens for client-application connection """
+    #   Looping the server listener to allow client to reconnect repeatedly
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind(('127.0.0.1', 60000))
+    server.listen()
     while True:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind((HOST, PORT))
-        s.listen()
-        while True:
-            conn, addr = s.accept()
+        conn, addr = server.accept()
+        try:
+            with conn:  # Executes when a connection is accepted
+                logging.info(f'INFO: Client connected: IP {addr[0]} Port {addr[1]}')
 
-            try:
-                with conn:  # Executes when a connection is accepted
-                    logging.info(f'INFO: Client connected: IP {addr[0]} Port {addr[1]}')
+                while True:
+                    # Deserializes received data and adds new object to database
+                    data = conn.recv(1024)
+                    if not data:
+                        break
+                    recv_item = pickle.loads(data)
+                    new_item = StockTracker(code=recv_item[0], description=recv_item[1], amount=recv_item[2])
+                    StockTracker.AddItem(new_item)
+                    logging.info(f"INFO: Item added by Client! Code: {new_item.data['CODE']}, Description: "
+                                 f"{new_item.data['DESCRIPTION']}, Amount: {new_item.data['AMOUNT']}")
+                    continue
 
-                    while True:
-                        #   A loop that deserializes the data then creates a new StockItem object and adds it to the database
-                        data = conn.recv(1024)
-                        if not data:
-                            break
-                        recv_item = pickle.loads(data)
-                        new_item = StockTracker(code=recv_item[0], description=recv_item[1], amount=recv_item[2])
-                        StockTracker.AddItem(new_item)
-                        logging.info(f"INFO: Item added by Client! Code: {new_item.data['CODE']}, Description: {new_item.data['DESCRIPTION']}, Amount: {new_item.data['AMOUNT']}")
-                        continue
+            logging.info(f'INFO: Client disconnected: IP {addr[0]} Port {addr[1]}')
+        except ConnectionResetError:
+            #   If connection terminates with receiving TCP-FIN bit the server restarts the listener
+            server.close()
+            logging.info(f'INFO: Client disconnected: IP {addr[0]} Port {addr[1]}')
 
-                logging.info(f'INFO: Client disconnected: IP {addr[0]} Port {addr[1]}')
-            except ConnectionResetError:
-                #   If client connection unexpectedly terminates the TCP connection is closed by server
-                s.close()
-                logging.info(f'INFO: Client disconnected: IP {addr[0]} Port {addr[1]}')
 
 def main_menu():
     """ CLI-menu loop function """
@@ -119,9 +115,8 @@ def main_menu():
                 PTable.field_names = ['Code', 'Description', 'Amount']
                 PTable.add_row([return_item['CODE'], return_item['DESCRIPTION'], return_item['AMOUNT']])
                 print('''
-            StockItAll Inventory:''')
+        StockItAll Inventory:''')
                 print(PTable)
-
             except (ValueError, TypeError):
                 print()
                 logging.info('ERROR: This item does not exist!')
@@ -139,7 +134,6 @@ def main_menu():
 
         elif select == 5:
             #   Exit option
-            print()
             logging.info('MESSAGE: Server shutting down... Good-bye!')
             exit()
 
@@ -149,8 +143,8 @@ def main_menu():
             logging.info('ERROR: This is not an option!')
 
 
-#   Thread 1 is set to daemon so it is killed when the main_menu calls for Exit
-t1 = threading.Thread(target=server, daemon=True)
+#   Threading functions main_menu and server_socket
+t1 = threading.Thread(target=server_socket, daemon=True)
 t2 = threading.Thread(target=main_menu)
 t1.start()
 t2.start()
